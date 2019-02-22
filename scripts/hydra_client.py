@@ -28,10 +28,16 @@ class HydraClient:
         self.s.connect((self.host, self.port))
         while not rospy.is_shutdown():
             raw = self.s.recv(1024)
-            # print(raw)
-            data = json.loads(raw)
-            self.parse_general(data)
-            # print(data)
+            try:
+                data = json.loads(raw)
+            except ValueError as e:
+                # In this case we probably got more than one json 
+                rospy.logwarn('Unable to parse JSON message ' + str(e))
+                print(raw)
+            else:
+                # No exception, continue parsing
+                self.parse_general(data)
+            
     def parse_general(self, data):
         if ('type' in data):
             if data['type'] == 'imu':
@@ -73,9 +79,14 @@ class HydraClient:
             msg.orientation.z = data['quat'][2]
             msg.orientation.w = data['quat'][3]
         except KeyError as e:
-            rospy.logwarn('Unable to parse message' + str(e))
-            return
-        self.imu_pub.publish(msg)
+            rospy.logwarn('Unable to IMU parse message ' + str(e))
+            print(data)
+        except ValueError as e:
+            rospy.logwarn('Unable to IMU parse message ' + str(e))
+            print(data)
+        else:
+            # Noe exception
+            self.imu_pub.publish(msg)
     def parse_gps(self, data):
         # {
         #   'general': {
@@ -110,9 +121,10 @@ class HydraClient:
             else:
                 fix.status.status = NavSatStatus.STATUS_FIX
         except KeyError as e:
-            rospy.logwarn('Unable to parse message' + str(e))
-            return
-        self.nav_sat_fix_pub.publish(fix)
+            rospy.logwarn('Unable to GNSS parse message ' + str(e))
+            print(data)
+        else:
+            self.nav_sat_fix_pub.publish(fix)
 
 if __name__ == '__main__':
     try:
