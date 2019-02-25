@@ -30,17 +30,34 @@ class HydraClient:
         rospy.loginfo('Connecting to %s:%d' % (self.host, self.port))
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.connect((self.host, self.port))
+        raw = ''
         while not rospy.is_shutdown():
-            raw = self.s.recv(1024)
-            try:
-                data = json.loads(raw)
-            except ValueError as e:
-                # In this case we probably got more than one json 
-                rospy.logwarn('Unable to parse JSON message ' + str(e))
-                print(raw)
-            else:
-                # No exception, continue parsing
-                self.parse_general(data)
+            raw += self.s.recv(1024)
+            while True:
+                raw_lines = raw.strip().split('\r\n')
+                if (len(raw_lines) == 0):
+                    # Nothing to parse
+                    raw = ''
+                    break
+                elif (len(raw_lines) == 1):
+                    if len(raw_lines[0]) == 0:
+                        raw = ''
+                        break
+                try:
+                    data = json.loads(raw_lines[0])
+                except ValueError as e:
+                    # In this case we probably got more than one json 
+                    rospy.logwarn('Unable to parse JSON message ' + str(e))
+                    print(raw)
+                    print(len(raw_lines))
+                    if (len(raw_lines) != 1):
+                        rospy.logwarn('This should not happen')
+                        raw = ''
+                    break
+                else:
+                    # No exception, continue parsing
+                    raw = raw[len(raw_lines[0]):]
+                    self.parse_general(data)
             
     def parse_general(self, data):
         if ('type' in data):
