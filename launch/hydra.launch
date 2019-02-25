@@ -1,0 +1,7 @@
+<launch>
+  <node name="hydra" pkg="hydra_gnss" type="hydra_client.py" >
+    <param name="port" value="5555" />
+    <param name="host" value="127.0.0.1" />
+    <param name="frame" value="gps" />
+  </node>
+</launch>
