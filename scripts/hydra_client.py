@@ -70,24 +70,40 @@ class HydraClient:
         msg = Imu()
         msg.header.stamp = rospy.Time.now()
         msg.header.frame_id = self.frame
+        msg.linear_acceleration_covariance = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+        msg.angular_velocity_covariance = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+        msg.orientation_covariance = [0, 0, 0, 0, 0, 0, 0, 0, 0]
         mag_msg = MagneticField()
         mag_msg.header.stamp = rospy.Time.now()
         mag_msg.header.frame_id = self.frame
+        mag_msg.magnetic_field_covariance = [0, 0, 0, 0, 0, 0, 0, 0, 0]
         try:
             
             msg.angular_velocity.x = data['gyro'][0]
             msg.angular_velocity.y = data['gyro'][1]
             msg.angular_velocity.z = data['gyro'][2]
+            msg.angular_velocity_covariance[0]  = 0.02
+            msg.angular_velocity_covariance[4]  = 0.02
+            msg.angular_velocity_covariance[8]  = 0.02
             msg.linear_acceleration.x = data['acc'][0]
             msg.linear_acceleration.y = data['acc'][1]
             msg.linear_acceleration.z = data['acc'][2]
+            msg.linear_acceleration_covariance[0]  = 0.04
+            msg.linear_acceleration_covariance[4]  = 0.04
+            msg.linear_acceleration_covariance[8]  = 0.04
             msg.orientation.x = data['quat'][0]
             msg.orientation.y = data['quat'][1]
             msg.orientation.z = data['quat'][2]
             msg.orientation.w = data['quat'][3]
+            msg.orientation_covariance[0] = 0.0025
+            msg.orientation_covariance[1] = 0.0025
+            msg.orientation_covariance[2] = 0.0025
             mag_msg.magnetic_field.x = data['mag'][0]
             mag_msg.magnetic_field.y = data['mag'][1]
             mag_msg.magnetic_field.z = data['mag'][2]
+            mag_msg.magnetic_field_covariance[0]  = 0.0
+            mag_msg.magnetic_field_covariance[4]  = 0.0
+            mag_msg.magnetic_field_covariance[8]  = 0.0
         except KeyError as e:
             rospy.logwarn('Unable to IMU parse message ' + str(e))
             print(data)
@@ -100,33 +116,38 @@ class HydraClient:
             self.magnetic_field_pub.publish(mag_msg)
     def parse_gps(self, data):
         # {
-        #   'general': {
-        #       'gpsFix': 'no fix/invalid', 
-        #       'mode': 'rover'
+        #   u'status': 
+        #   {
+        #       u'pDOP': 99.99, 
+        #       u'positionLatLonAlt': [u'0.000000000', u'0.000000000', u'0.000000000'], 
+        #       u'satellites_dB': u'15,', 
+        #       u'gga': u'', 
+        #       u'vAcc': 3750111.232, 
+        #       u'position': [u'6378137.0000', u'0.0000', u'0.0000'], 
+        #       u'estAccuracy': 4294967.295, u'heading': 0, 
+        #       u'headingAccuracy': 180, 
+        #       u'hAcc': 4294967.295
         #   }, 
-        #   'status': {
-        #       'estAccuracy': 4294967.295, 
-        #       'gga': '', 
-        #       'heading': 0, 
-        #       'headingAccuracy': 180, 
-        #       'pDOP': 99.99, 
-        #       'position': ['6378137.0000', '0.0000', '0.0000'], 
-        #       'positionLatLonAlt': ['0.000000000', '0.000000000', '0.000000000'], 
-        #       'satellites_dB': ''
-        #   }, 
-        #   'ts': 6538581
+        #   u'ts': 77168472, 
+        #   u'general': 
+        #   {
+        #       u'gpsFix': u'no fix/invalid', 
+        #       u'mode': u'rover'
+        #   }
         # }
         fix = NavSatFix()
         fix.header.stamp = rospy.Time.now()
         fix.header.frame_id = "gps"
         fix.status.service = NavSatStatus.SERVICE_GPS
-        
         fix.position_covariance = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         fix.position_covariance_type = NavSatFix.COVARIANCE_TYPE_APPROXIMATED
         try:
             fix.latitude = float(data['status']['positionLatLonAlt'][0])
             fix.longitude = float(data['status']['positionLatLonAlt'][1])
             fix.altitude = float(data['status']['positionLatLonAlt'][2])
+            fix.position_covariance[0] = float(data['status']['hAcc'])
+            fix.position_covariance[4] = float(data['status']['hAcc'])
+            fix.position_covariance[8] = float(data['status']['vAcc'])
             if data['general']['gpsFix'] == 'no fix/invalid':
                 fix.status.status = NavSatStatus.STATUS_NO_FIX
             else:
@@ -143,6 +164,3 @@ if __name__ == '__main__':
         hc.run()
     except rospy.ROSInterruptException:
         pass
-
-
-# nc 192.168.89.10 5555
