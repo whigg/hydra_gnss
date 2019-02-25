@@ -6,6 +6,7 @@ import socket
 import json
 from std_msgs.msg import String
 from sensor_msgs.msg import Imu
+from sensor_msgs.msg import MagneticField
 from sensor_msgs.msg import NavSatFix
 from sensor_msgs.msg import NavSatStatus
 from geometry_msgs.msg import Vector3
@@ -19,9 +20,12 @@ class HydraClient:
         rospy.set_param("~host", self.host)
         self.port = int(rospy.get_param("~port", default=5555))
         rospy.set_param("~port", self.port)
+        self.frame = rospy.get_param("~frame", default="gps")
+        rospy.set_param("~frame", self.port)
         
         self.nav_sat_fix_pub = rospy.Publisher('gps/data', NavSatFix, queue_size=10)        
         self.imu_pub = rospy.Publisher('imu/data', Imu, queue_size=10)
+        self.magnetic_field_pub = rospy.Publisher('imu/mag', MagneticField, queue_size=10)
     def run(self):
         rospy.loginfo('Connecting to %s:%d' % (self.host, self.port))
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -65,7 +69,10 @@ class HydraClient:
         # }
         msg = Imu()
         msg.header.stamp = rospy.Time.now()
-        msg.header.frame_id = "gps"
+        msg.header.frame_id = self.frame
+        mag_msg = MagneticField()
+        mag_msg.header.stamp = rospy.Time.now()
+        mag_msg.header.frame_id = self.frame
         try:
             
             msg.angular_velocity.x = data['gyro'][0]
@@ -78,6 +85,9 @@ class HydraClient:
             msg.orientation.y = data['quat'][1]
             msg.orientation.z = data['quat'][2]
             msg.orientation.w = data['quat'][3]
+            mag_msg.magnetic_field.x = data['mag'][0]
+            mag_msg.magnetic_field.y = data['mag'][1]
+            mag_msg.magnetic_field.z = data['mag'][2]
         except KeyError as e:
             rospy.logwarn('Unable to IMU parse message ' + str(e))
             print(data)
@@ -85,8 +95,9 @@ class HydraClient:
             rospy.logwarn('Unable to IMU parse message ' + str(e))
             print(data)
         else:
-            # Noe exception
+            # No exception
             self.imu_pub.publish(msg)
+            self.magnetic_field_pub.publish(mag_msg)
     def parse_gps(self, data):
         # {
         #   'general': {
