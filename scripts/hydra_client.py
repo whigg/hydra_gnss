@@ -21,7 +21,7 @@ class HydraClient:
         self.port = int(rospy.get_param("~port", default=5555))
         rospy.set_param("~port", self.port)
         self.frame = rospy.get_param("~frame", default="gps")
-        rospy.set_param("~frame", self.port)
+        rospy.set_param("~frame", self.frame)
         
         self.nav_sat_fix_pub = rospy.Publisher('gps/data', NavSatFix, queue_size=10)        
         self.imu_pub = rospy.Publisher('imu/data', Imu, queue_size=10)
