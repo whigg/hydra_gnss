@@ -154,7 +154,7 @@ class HydraClient:
         # }
         fix = NavSatFix()
         fix.header.stamp = rospy.Time.now()
-        fix.header.frame_id = "gps"
+        fix.header.frame_id = self.frame
         fix.status.service = NavSatStatus.SERVICE_GPS
         fix.position_covariance = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         fix.position_covariance_type = NavSatFix.COVARIANCE_TYPE_APPROXIMATED
