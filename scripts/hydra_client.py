@@ -113,8 +113,8 @@ class HydraClient:
             msg.orientation.z = data['quat'][2]
             msg.orientation.w = data['quat'][3]
             msg.orientation_covariance[0] = 0.0025
-            msg.orientation_covariance[1] = 0.0025
-            msg.orientation_covariance[2] = 0.0025
+            msg.orientation_covariance[4] = 0.0025
+            msg.orientation_covariance[8] = 0.0025
             mag_msg.magnetic_field.x = data['mag'][0]
             mag_msg.magnetic_field.y = data['mag'][1]
             mag_msg.magnetic_field.z = data['mag'][2]
