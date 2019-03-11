@@ -4,6 +4,7 @@
 import rospy
 import socket
 import json
+import math
 from std_msgs.msg import String
 from sensor_msgs.msg import Imu
 from sensor_msgs.msg import MagneticField
@@ -11,6 +12,7 @@ from sensor_msgs.msg import NavSatFix
 from sensor_msgs.msg import NavSatStatus
 from geometry_msgs.msg import Vector3
 from geometry_msgs.msg import Quaternion
+from tf.transformations import *
 
 class HydraClient:
     def __init__(self):
@@ -94,30 +96,32 @@ class HydraClient:
         mag_msg.header.stamp = rospy.Time.now()
         mag_msg.header.frame_id = self.frame
         mag_msg.magnetic_field_covariance = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+        
         try:
             
             msg.angular_velocity.x = data['gyro'][0]
-            msg.angular_velocity.y = data['gyro'][1]
-            msg.angular_velocity.z = data['gyro'][2]
+            msg.angular_velocity.y = -data['gyro'][1]
+            msg.angular_velocity.z = -data['gyro'][2]
             msg.angular_velocity_covariance[0]  = 0.02
             msg.angular_velocity_covariance[4]  = 0.02
             msg.angular_velocity_covariance[8]  = 0.02
-            msg.linear_acceleration.x = data['acc'][0]
+            msg.linear_acceleration.x = -data['acc'][0]
             msg.linear_acceleration.y = data['acc'][1]
             msg.linear_acceleration.z = data['acc'][2]
             msg.linear_acceleration_covariance[0]  = 0.04
             msg.linear_acceleration_covariance[4]  = 0.04
             msg.linear_acceleration_covariance[8]  = 0.04
-            msg.orientation.x = data['quat'][0]
-            msg.orientation.y = data['quat'][1]
-            msg.orientation.z = data['quat'][2]
-            msg.orientation.w = data['quat'][3]
+            q = [data['quat'][0], data['quat'][1], data['quat'][2], data['quat'][3]]
+            msg.orientation.x = q[1]
+            msg.orientation.y = q[2]
+            msg.orientation.z = q[3]
+            msg.orientation.w = q[0]
             msg.orientation_covariance[0] = 0.0025
             msg.orientation_covariance[4] = 0.0025
             msg.orientation_covariance[8] = 0.0025
             mag_msg.magnetic_field.x = data['mag'][0]
-            mag_msg.magnetic_field.y = data['mag'][1]
-            mag_msg.magnetic_field.z = data['mag'][2]
+            mag_msg.magnetic_field.y = -data['mag'][1]
+            mag_msg.magnetic_field.z = -data['mag'][2]
             mag_msg.magnetic_field_covariance[0]  = 0.0
             mag_msg.magnetic_field_covariance[4]  = 0.0
             mag_msg.magnetic_field_covariance[8]  = 0.0

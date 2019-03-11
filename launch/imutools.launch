@@ -1,0 +1,22 @@
+<launch>
+  <node name="hydra" pkg="hydra_gnss" type="hydra_client.py" >
+    <param name="port" value="5555" />
+    <param name="host" value="127.0.0.1" />
+    <param name="frame" value="gps" />
+    <remap from="imu/data" to="imu/data_raw"/>
+  </node>
+  <!-- <node pkg="imu_filter_madgwick" type="imu_filter_node" name="imu_filter_node" > -->
+    <!-- Whether to use the magnetic field data in the data fusion. -->
+    <!-- <param name="use_mag" value="false"/> -->
+    <!-- Gain of the filter. Higher values lead to faster convergence but more noise. Lower values lead to slower convergence but smoother signal. Range: 0.0 to 1.0  -->
+    <!-- <param name="gain" value="0.1"/> -->
+    <!-- Gyro drift gain (approx. rad/s). Range: -1.0 to 1.0  -->
+    <!-- <param name="zeta" value="0"/>         -->
+  <!-- </node> -->
+  <node pkg="imu_complementary_filter" type="complementary_filter_node" name="complementary_filter_node" >    
+    <!-- Whether to use the magnetic field data in the data fusion.  -->
+    <param name="use_mag" value="true"/>
+  </node>
+
+
+</launch>
